@@ -1,35 +1,51 @@
-import React, { useEffect, useState } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import React, { useMemo, useState } from "react";
+import styled from "styled-components";
 import db from "./firebaseConfig";
-import {
-  collection,
-  orderBy,
-  onSnapshot,
-  getDocs,
-  query,
-  where,
-} from "firebase/firestore";
 
 export const Chat = () => {
   const [messages, setMessages] = useState([]);
   const user_id = 4;
-  const getMessages = async () => {
-    const loanerChat = query(
-      collection(db, "messages"),
-      where("loaner_id", "==", user_id)
-    );
-    const ownerChat = query(
-      collection(db, "messages"),
-      where("owner_id", "==", user_id)
-    );
-    const loanerSnapshot = await getDocs(loanerChat);
-    const ownerSnapshot = await getDocs(ownerChat);
-    const list = loanerSnapshot.docs.map((doc) => doc.data());
-    list.push(ownerSnapshot.docs.map((doc) => doc.data()));
-    console.log(list);
-    setMessages(list);
+  const sendChat = async () => {
+    const channelId = "V2SRYEStwf8JNpZRZfEV";
+
+    const q = collection(db, "messages", channelId, "chat");
+
+    const unsub = onSnapshot(q, (querySnap) => {
+      const msgs = [];
+      setMessages([]);
+      querySnap.forEach((doc) => {
+        msgs.push(doc.data().content);
+        setMessages((prev) => [...prev, doc.data()]);
+      });
+    });
   };
-  useEffect(() => {
-    setMessages(() => getMessages());
-  }, []);
-  return <div>Chat</div>;
+
+  useMemo(() => sendChat(), []);
+  return (
+    <div>
+      {messages &&
+        messages.map((data) =>
+          data.from_id !== user_id ? (
+            <Opponent key={data.id}>
+              <span>{data.from_id}</span>
+              <span>{data.content}</span>
+            </Opponent>
+          ) : (
+            <div key={data.id}>
+              <span>{data.from_id}</span>
+              <span>{data.content}</span>
+            </div>
+          )
+        )}
+      <div>
+        <input type="text" placeholder="채팅 입력" />
+        <button>전송</button>
+      </div>
+    </div>
+  );
 };
+
+const Opponent = styled.span`
+  color: red;
+`;
