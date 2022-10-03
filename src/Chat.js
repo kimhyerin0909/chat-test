@@ -1,15 +1,26 @@
-import { collection, onSnapshot } from "firebase/firestore";
+import { async } from "@firebase/util";
+import {
+  collection,
+  doc,
+  onSnapshot,
+  orderBy,
+  query,
+  setDoc,
+} from "firebase/firestore";
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import db from "./firebaseConfig";
 
 export const Chat = () => {
   const [messages, setMessages] = useState([]);
+  const [sendText, setSendText] = useState("");
   const user_id = 4;
-  const sendChat = async () => {
-    const channelId = "V2SRYEStwf8JNpZRZfEV";
-
-    const q = collection(db, "messages", channelId, "chat");
+  const channelId = "V2SRYEStwf8JNpZRZfEV";
+  const getChatData = async () => {
+    const q = query(
+      collection(db, "messages", channelId, "chat"),
+      orderBy("sendAt")
+    );
 
     const unsub = onSnapshot(q, (querySnap) => {
       const msgs = [];
@@ -21,7 +32,18 @@ export const Chat = () => {
     });
   };
 
-  useMemo(() => sendChat(), []);
+  const sendChat = async () => {
+    const newChatRef = doc(collection(db, "messages", channelId, "chat"));
+
+    await setDoc(newChatRef, {
+      content: sendText,
+      from_id: user_id,
+      sendAt: new Date(),
+      id: newChatRef.id,
+    });
+  };
+
+  useMemo(() => getChatData(), []);
   return (
     <div>
       {messages &&
@@ -39,8 +61,12 @@ export const Chat = () => {
           )
         )}
       <div>
-        <input type="text" placeholder="채팅 입력" />
-        <button>전송</button>
+        <input
+          type="text"
+          placeholder="채팅 입력"
+          onChange={(e) => setSendText(e.target.value)}
+        />
+        <button onClick={sendChat}>전송</button>
       </div>
     </div>
   );
