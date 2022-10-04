@@ -7,35 +7,38 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
+import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import db from "./firebaseConfig";
 
 export const Chat = () => {
+  const { ch_id } = useParams();
+  // console.log(id);
   const [messages, setMessages] = useState([]);
   const [sendText, setSendText] = useState("");
+  const input = useRef(null);
   const user_id = 4;
-  const channelId = "V2SRYEStwf8JNpZRZfEV";
+  // const channelId = "V2SRYEStwf8JNpZRZfEV";
   const getChatData = async () => {
     const q = query(
-      collection(db, "messages", channelId, "chat"),
+      collection(db, "messages", ch_id, "chat"),
       orderBy("sendAt")
     );
 
     const unsub = onSnapshot(q, (querySnap) => {
-      const msgs = [];
       setMessages([]);
       querySnap.forEach((doc) => {
-        msgs.push(doc.data().content);
         setMessages((prev) => [...prev, doc.data()]);
       });
     });
   };
 
   const sendChat = async () => {
-    const newChatRef = doc(collection(db, "messages", channelId, "chat"));
+    const newChatRef = doc(collection(db, "messages", ch_id, "chat"));
     const channelRef = doc(db, "messages", newChatRef._path["segments"][1]);
     const sendTime = new Date();
+    input.current.value = "";
 
     await setDoc(newChatRef, {
       content: sendText,
@@ -49,16 +52,22 @@ export const Chat = () => {
     });
   };
 
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      sendChat();
+    }
+  };
+
   useMemo(() => getChatData(), []);
   return (
     <div>
       {messages &&
         messages.map((data) =>
           data.from_id !== user_id ? (
-            <Opponent key={data.id}>
-              <span>{data.from_id}</span>
-              <span>{data.content}</span>
-            </Opponent>
+            <div key={data.id}>
+              <Opponent>{data.from_id}</Opponent>
+              <Opponent>{data.content}</Opponent>
+            </div>
           ) : (
             <div key={data.id}>
               <span>{data.from_id}</span>
@@ -68,6 +77,8 @@ export const Chat = () => {
         )}
       <div>
         <input
+          ref={input}
+          onKeyPress={handleKeyPress}
           type="text"
           placeholder="채팅 입력"
           onChange={(e) => setSendText(e.target.value)}
