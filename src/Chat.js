@@ -7,7 +7,6 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
-import moment from "moment";
 import React, { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
