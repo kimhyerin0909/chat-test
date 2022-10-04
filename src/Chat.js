@@ -7,6 +7,7 @@ import {
   setDoc,
   updateDoc,
 } from "firebase/firestore";
+import moment from "moment";
 import React, { useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
@@ -14,12 +15,10 @@ import db from "./firebaseConfig";
 
 export const Chat = () => {
   const { ch_id } = useParams();
-  // console.log(id);
   const [messages, setMessages] = useState([]);
   const [sendText, setSendText] = useState("");
   const input = useRef(null);
   const user_id = 4;
-  // const channelId = "V2SRYEStwf8JNpZRZfEV";
   const getChatData = async () => {
     const q = query(
       collection(db, "messages", ch_id, "chat"),
@@ -67,11 +66,13 @@ export const Chat = () => {
             <div key={data.id}>
               <Opponent>{data.from_id}</Opponent>
               <Opponent>{data.content}</Opponent>
+              <Opponent>{data.sendAt.toDate().toString()}</Opponent>
             </div>
           ) : (
             <div key={data.id}>
               <span>{data.from_id}</span>
               <span>{data.content}</span>
+              <span>{data.sendAt.toDate().toString()}</span>
             </div>
           )
         )}
