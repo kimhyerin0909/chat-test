@@ -1,4 +1,3 @@
-import { async } from "@firebase/util";
 import {
   collection,
   doc,
@@ -6,6 +5,7 @@ import {
   orderBy,
   query,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
@@ -34,12 +34,18 @@ export const Chat = () => {
 
   const sendChat = async () => {
     const newChatRef = doc(collection(db, "messages", channelId, "chat"));
+    const channelRef = doc(db, "messages", newChatRef._path["segments"][1]);
+    const sendTime = new Date();
 
     await setDoc(newChatRef, {
       content: sendText,
       from_id: user_id,
-      sendAt: new Date(),
+      sendAt: sendTime,
       id: newChatRef.id,
+    });
+
+    await updateDoc(channelRef, {
+      sendAt: sendTime,
     });
   };
 
